@@ -1,0 +1,51 @@
+{% import "_includes/forms" as forms %}
+
+{{ forms.lightswitchField({
+    label: 'Load base stylesheet'|t('quick-poll'),
+    instructions: 'Auto-load the plugin’s base CSS on the front end. Turn off to ship your own; the base file URL is available via craft.quickPoll.baseCssUrl.'|t('quick-poll'),
+    id: 'loadBaseCss',
+    name: 'loadBaseCss',
+    on: settings.loadBaseCss,
+}) }}
+
+{{ forms.selectField({
+    label: 'Default result visibility'|t('quick-poll'),
+    id: 'defaultResultsVisibility',
+    name: 'defaultResultsVisibility',
+    value: settings.defaultResultsVisibility,
+    options: [
+        { label: 'After the visitor votes'|t('quick-poll'), value: 'afterVote' },
+        { label: 'Always'|t('quick-poll'), value: 'always' },
+        { label: 'Only after the poll closes'|t('quick-poll'), value: 'afterClose' },
+    ],
+}) }}
+
+{{ forms.textField({
+    label: 'Results cache (seconds)'|t('quick-poll'),
+    instructions: 'How long the public results endpoint may be cached. Keep short. 0 disables.'|t('quick-poll'),
+    id: 'resultsCacheDuration',
+    name: 'resultsCacheDuration',
+    type: 'number',
+    value: settings.resultsCacheDuration,
+}) }}
+
+{% set groupOptions = [{ label: '— ' ~ 'None'|t('quick-poll') ~ ' —', value: '' }] %}
+{% for g in craft.app.categories.getAllGroups() %}
+    {% set groupOptions = groupOptions|merge([{ label: g.name|t('site'), value: g.uid }]) %}
+{% endfor %}
+{{ forms.selectField({
+    label: 'Poll category group'|t('quick-poll'),
+    instructions: 'Optional. Lets editors assign categories from this group to a poll (for filtering / front-end listing).'|t('quick-poll'),
+    id: 'categoryGroupUid',
+    name: 'categoryGroupUid',
+    value: settings.categoryGroupUid,
+    options: groupOptions,
+}) }}
+
+{{ forms.passwordField({
+    label: 'Voter pepper'|t('quick-poll'),
+    instructions: 'Secret mixed into the anonymous voter hash. Prefer setting this via config/quick-poll.php. Falls back to the app security key when empty.'|t('quick-poll'),
+    id: 'voterPepper',
+    name: 'voterPepper',
+    value: settings.voterPepper,
+}) }}

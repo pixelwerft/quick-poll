@@ -1,0 +1,264 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set fullPageForm = true %}
+{% set selectedSubnavItem = 'polls' %}
+
+{# Breadcrumbs + native site (= language) switcher in the page header.
+   Mirrors Craft's own globals/_edit.twig: the globe crumb renders the same
+   disclosure dropdown used for entry content. Sites come from the configured,
+   editable sites — no hard-coded language list. #}
+{% set crumbs = [
+    { label: 'Polls'|t('quick-poll'), url: url('quick-poll') },
+] %}
+{% if craft.app.getIsMultiSite() %}
+    {% set crumbs = crumbs|merge([{
+        id: 'site-crumb',
+        icon: 'world',
+        label: site.name|t('site'),
+        menu: {
+            items: siteMenuItems(null, site),
+            label: 'Select site'|t('app'),
+        },
+    }]) %}
+{% endif %}
+
+{# Native action menu (the "…" disclosure next to Save) carries the destructive
+   delete, same placement as entries/categories. #}
+{% if not isNew %}
+    {% set actionMenu = disclosureMenu([
+        {
+            icon: 'clone',
+            label: 'Copy poll'|t('quick-poll'),
+            action: 'quick-poll/polls/duplicate',
+            params: { pollId: poll.id },
+        },
+        {
+            icon: 'trash',
+            label: 'Delete poll'|t('quick-poll'),
+            destructive: true,
+            action: 'quick-poll/polls/delete',
+            params: { pollId: poll.id },
+            confirm: 'Delete this poll?'|t('quick-poll'),
+            redirect: 'quick-poll',
+        },
+    ], {
+        hiddenLabel: 'Actions'|t('app'),
+        buttonAttributes: {
+            class: ['action-btn'],
+            title: 'Actions'|t('app'),
+            data: { 'disclosure-trigger': true },
+        },
+    }) %}
+{% endif %}
+
+{% block content %}
+    {{ actionInput('quick-poll/polls/save') }}
+    {{ redirectInput('quick-poll/polls/{id}') }}
+    {% if not isNew %}{{ hiddenInput('pollId', poll.id) }}{% endif %}
+    {{ hiddenInput('siteId', site.id) }}
+
+    {{ forms.textareaField({
+        label: 'Question'|t('quick-poll'),
+        id: 'title',
+        name: 'title',
+        value: poll.title,
+        rows: 2,
+        required: true,
+        translatable: true,
+        errors: poll.getErrors('title'),
+    }) }}
+
+    {{ forms.selectField({
+        label: 'Type'|t('quick-poll'),
+        id: 'pollType',
+        name: 'pollType',
+        value: poll.pollType,
+        options: [
+            { label: 'Rating (1–5)'|t('quick-poll'), value: 'rating' },
+            { label: 'Choice (A/B/C…)'|t('quick-poll'), value: 'choice' },
+            { label: 'Mood'|t('quick-poll'), value: 'mood' },
+            { label: 'Grid (yes/maybe/no)'|t('quick-poll'), value: 'grid' },
+        ],
+    }) }}
+
+    {{ forms.textareaField({
+        label: 'Options'|t('quick-poll'),
+        instructions: 'One option per line. Not used for rating polls.'|t('quick-poll'),
+        id: 'options',
+        name: 'options',
+        rows: 4,
+        translatable: true,
+        value: poll.options|join("\n"),
+    }) }}
+
+    {# Settings row — laid out side by side the Craft way: a flex-fields
+       container with width-25 on each field (wraps on narrow screens). #}
+    <div class="flex-fields">
+        {{ forms.lightswitchField({
+            fieldClass: 'width-25',
+            label: 'Allow multiple answers'|t('quick-poll'),
+            id: 'multiSelect',
+            name: 'multiSelect',
+            on: poll.multiSelect,
+        }) }}
+
+        {{ forms.lightswitchField({
+            fieldClass: 'width-25',
+            label: 'Show share button'|t('quick-poll'),
+            instructions: 'Let visitors share the poll once results are shown.'|t('quick-poll'),
+            id: 'showShare',
+            name: 'showShare',
+            on: poll.showShare,
+        }) }}
+
+        {{ forms.selectField({
+            fieldClass: 'width-25',
+            label: 'Who can vote'|t('quick-poll'),
+            id: 'pollAccess',
+            name: 'pollAccess',
+            value: poll.pollAccess,
+            options: [
+                { label: 'Public (anyone)'|t('quick-poll'), value: 'public' },
+                { label: 'Members only (login)'|t('quick-poll'), value: 'members' },
+            ],
+        }) }}
+
+        {{ forms.selectField({
+            fieldClass: 'width-25',
+            label: 'Result visibility'|t('quick-poll'),
+            id: 'resultsVisibility',
+            name: 'resultsVisibility',
+            value: poll.resultsVisibility,
+            options: [
+                { label: 'After the visitor votes'|t('quick-poll'), value: 'afterVote' },
+                { label: 'Always'|t('quick-poll'), value: 'always' },
+                { label: 'Only after the poll closes'|t('quick-poll'), value: 'afterClose' },
+            ],
+        }) }}
+
+        {{ forms.dateTimeField({
+            fieldClass: 'width-25',
+            label: 'Open until'|t('quick-poll'),
+            id: 'openUntil',
+            name: 'openUntil',
+            value: poll.openUntil,
+        }) }}
+
+        {{ forms.lightswitchField({
+            fieldClass: 'width-25',
+            label: 'Hide after it closes'|t('quick-poll'),
+            instructions: 'When the poll closes, hide it entirely instead of showing the closed state.'|t('quick-poll'),
+            id: 'hideAfterClose',
+            name: 'hideAfterClose',
+            on: poll.hideAfterClose,
+        }) }}
+
+        {{ forms.lightswitchField({
+            fieldClass: 'width-25',
+            label: 'Allow changing the answer'|t('quick-poll'),
+            instructions: 'Let voters reopen the form and change their answer while the poll is open.'|t('quick-poll'),
+            id: 'allowRevote',
+            name: 'allowRevote',
+            on: poll.allowRevote,
+        }) }}
+    </div>
+
+    {{ forms.textareaField({
+        label: 'Answer (shown above the result)'|t('quick-poll'),
+        instructions: 'Optional text revealed with the results — e.g. the correct answer or a comment.'|t('quick-poll'),
+        id: 'resultText',
+        name: 'resultText',
+        rows: 3,
+        translatable: true,
+        value: poll.resultText,
+    }) }}
+
+    {% set qpSettings = craft.app.plugins.getPlugin('quick-poll').settings %}
+    {% set catGroup = qpSettings.categoryGroupUid ? craft.app.categories.getGroupByUid(qpSettings.categoryGroupUid) : null %}
+    {% if catGroup %}
+        {{ forms.elementSelectField({
+            label: 'Categories'|t('quick-poll'),
+            id: 'categoryIds',
+            name: 'categoryIds',
+            elementType: 'craft\\elements\\Category',
+            sources: ['group:' ~ catGroup.uid],
+            elements: poll.getCategories(),
+            viewMode: 'list',
+        }) }}
+    {% endif %}
+{% endblock %}
+
+{# Right-hand details pane — live result of this poll (all sites). #}
+{% block details %}
+    {% if not isNew %}
+        {% set r = craft.quickPoll.forPoll(poll) %}
+        <div id="qp-cp-results" class="meta read-only">
+            <div class="data">
+                <h5 class="heading">{{ 'Participants'|t('quick-poll') }}</h5>
+                <div class="value">{{ r.total }}</div>
+            </div>
+            {% if r.average is defined and r.average is not null %}
+                <div class="data">
+                    <h5 class="heading">{{ 'Average'|t('quick-poll') }}</h5>
+                    <div class="value">{{ r.average }} / 5</div>
+                </div>
+            {% endif %}
+            <div class="data">
+                <h5 class="heading">{{ 'Result'|t('quick-poll') }}</h5>
+                <div class="value">
+                    {% if r.type == 'grid' %}
+                        <ul class="qp-cp-bars">
+                            {% for o in r.options %}
+                                <li class="qp-cp-row">
+                                    <span class="qp-cp-label">{{ o.label }}</span>
+                                    <span class="qp-cp-num">✓ {{ o.yes }} · ~ {{ o.maybe }} · ✗ {{ o.no }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <ul class="qp-cp-bars">
+                            {% for o in r.options %}
+                                <li class="qp-cp-row">
+                                    <span class="qp-cp-label">{{ o.label }}</span>
+                                    <span class="qp-cp-track"><span class="qp-cp-fill" style="width: {{ o.pct }}%"></span></span>
+                                    <span class="qp-cp-num">{{ o.pct }}% ({{ o.count }})</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if poll.pollAccess == 'members' %}
+                {% set voters = craft.quickPoll.voters(poll) %}
+                <div class="data">
+                    <h5 class="heading">{{ 'Voters'|t('quick-poll') }}</h5>
+                    <div class="value">
+                        {% if voters %}
+                            <ul class="qp-cp-voters">
+                                {% for v in voters %}
+                                    <li><span class="qp-cp-voter">{{ v.user ? v.user.friendlyName : ('#' ~ v.userId) }}</span> <span class="qp-cp-num">{{ v.votes|join(', ') }}</span></li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="light">{{ 'No votes yet.'|t('quick-poll') }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <p class="qp-cp-note">{{ 'Member poll — votes are not anonymous.'|t('quick-poll') }}</p>
+            {% endif %}
+        </div>
+        {% css %}
+            #qp-cp-results .qp-cp-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+            #qp-cp-results .qp-cp-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; }
+            #qp-cp-results .qp-cp-label { font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            #qp-cp-results .qp-cp-track { grid-column: 1 / -1; display: block; height: 6px; border-radius: 999px; background: var(--gray-100, #e3e5e8); overflow: hidden; }
+            #qp-cp-results .qp-cp-fill { display: block; height: 100%; background: var(--primary-color, #3b82f6); border-radius: 999px; }
+            #qp-cp-results .qp-cp-num { font-variant-numeric: tabular-nums; color: var(--medium-text-color, #6b7280); font-size: 12px; }
+            #qp-cp-results .qp-cp-voters { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+            #qp-cp-results .qp-cp-voters li { display: flex; justify-content: space-between; gap: 10px; }
+            #qp-cp-results .qp-cp-note { margin: 8px 0 0; font-size: 11px; font-style: italic; color: var(--medium-text-color, #6b7280); }
+        {% endcss %}
+    {% endif %}
+{% endblock %}

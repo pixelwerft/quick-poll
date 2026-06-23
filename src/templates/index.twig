@@ -1,0 +1,60 @@
+{% extends "_layouts/cp" %}
+
+{% set title = "Polls"|t('quick-poll') %}
+{% set qpSettings = craft.app.plugins.getPlugin('quick-poll').settings %}
+{% set catGroup = qpSettings.categoryGroupUid ? craft.app.categories.getGroupByUid(qpSettings.categoryGroupUid) : null %}
+{% set activeCat = craft.app.request.getParam('category') %}
+{% set polls   = craft.quickPoll.allPolls(activeCat ? activeCat : null) %}
+{% set voters  = craft.quickPoll.votersByPoll() %}
+
+{% block actionButton %}
+    {% if polls|length %}
+        <a href="{{ actionUrl('quick-poll/dashboard/export') }}" class="btn">{{ "Export CSV"|t('quick-poll') }}</a>
+    {% endif %}
+    <a href="{{ cpUrl('quick-poll/polls/new') }}" class="btn submit add icon">{{ "New poll"|t('quick-poll') }}</a>
+{% endblock %}
+
+{% block content %}
+    {% if catGroup %}
+        <div class="flex" style="margin-bottom: 16px; align-items: center;">
+            <span class="light">{{ "Categories"|t('quick-poll') }}:</span>
+            <div class="select">
+                <select onchange="location.href='{{ cpUrl('quick-poll') }}' + (this.value ? ('?category=' + this.value) : '')">
+                    <option value="">{{ "All polls"|t('quick-poll') }}</option>
+                    {% for c in craft.categories.group(catGroup.handle).all() %}
+                        <option value="{{ c.id }}"{{ activeCat == c.id ? ' selected' }}>{{ c.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    {% endif %}
+    {% if polls|length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th>{{ "Question"|t('quick-poll') }}</th>
+                    <th>{{ "Type"|t('quick-poll') }}</th>
+                    <th>{{ "Status"|t('quick-poll') }}</th>
+                    <th>{{ "Visibility"|t('quick-poll') }}</th>
+                    <th class="rightalign">{{ "Participants"|t('quick-poll') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for poll in polls %}
+                    <tr>
+                        <td><a href="{{ poll.cpEditUrl }}">{{ poll.title }}</a></td>
+                        <td><code>{{ poll.pollType }}</code></td>
+                        <td>
+                            <span class="status {{ craft.quickPoll.isOpen(poll) ? 'green' : '' }}"></span>
+                            {{ craft.quickPoll.isOpen(poll) ? "Open"|t('quick-poll') : "Closed"|t('quick-poll') }}
+                        </td>
+                        <td><code>{{ poll.resultsVisibility }}</code></td>
+                        <td class="rightalign"><strong>{{ voters[poll.id] ?? 0 }}</strong></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="zilch">{{ "No polls yet."|t('quick-poll') }}</p>
+    {% endif %}
+{% endblock %}

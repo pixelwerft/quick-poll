@@ -1,0 +1,119 @@
+// ============================================================================
+// Quick Poll — BASE (SCSS source)
+// ----------------------------------------------------------------------------
+// Structural base only. Import it into your own build and extend/override:
+//
+//   // _my-polls.scss
+//   $qp-accent: #e4002b;          // your brand colour
+//   @use "path/to/poll" with ($qp-accent: $qp-accent);
+//   .qp-poll { /* your decoration: card, shadows, fonts … */ }
+//
+// The compiled equivalent ships as poll.css (loaded by the plugin). This file
+// is for SCSS users who'd rather compile their own.
+// ============================================================================
+
+$qp-accent: #2b6cb0 !default;
+$qp-track:  #e7ecf1 !default;
+$qp-radius: 8px !default;
+$qp-gap:    0.5rem !default;
+$qp-max:    none !default;
+
+.qp-poll {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: $qp-max;
+  margin: 1.25rem 0;
+  font-size: 1rem;
+  line-height: 1.4;
+
+  *, *::before, *::after { box-sizing: inherit; }
+
+  &__question { margin: 0 0 0.75rem; font-weight: 700; }
+  &__hint { margin: 0; opacity: 0.7; }
+  &__answer { margin: 0 0 0.75rem; &[hidden] { display: none; } }
+  &__submit { align-self: flex-start; margin-top: 0.4rem; cursor: pointer; }
+}
+
+.qp-form { display: flex; flex-direction: column; gap: $qp-gap; border: 0; margin: 0; padding: 0; min-width: 0; }
+.qp-form[hidden] { display: none; } // explicit display:flex above would otherwise beat the [hidden] attribute → form/submit would stay visible after voting
+.qp-error { margin: 0.5rem 0 0; }
+
+// choice / mood
+.qp-option {
+  display: flex; align-items: center; gap: 0.6rem; cursor: pointer; min-width: 0;
+  input { accent-color: $qp-accent; flex: none; }
+  &__emoji { line-height: 1; }
+  &__label { min-width: 0; }
+}
+
+// rating
+.qp-rating {
+  display: inline-flex; flex-direction: row-reverse; gap: 0.15rem;
+  input { position: absolute; opacity: 0; width: 0; height: 0; }
+  label { cursor: pointer; }
+}
+
+// segmented pill
+.qp-pill {
+  display: flex; width: 100%; min-width: 0; border-radius: 999px; overflow: hidden; background: $qp-track;
+
+  &__seg {
+    flex: 1 1 0; min-width: 0;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 0.6rem 0.5rem; line-height: 1.2;
+
+    & + & { border-left: 1px solid rgba(0, 0, 0, 0.08); }
+  }
+  &__label, &__pct { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &__pct { font-variant-numeric: tabular-nums; }
+
+  &--form &__seg {
+    cursor: pointer;
+    input { position: absolute; opacity: 0; width: 0; height: 0; }
+    &:has(input:checked) { background: $qp-accent; color: #fff; }
+  }
+  &--result &__seg.is-leader { background: $qp-accent; color: #fff; }
+}
+
+// grid voting
+.qp-grid {
+  display: flex; flex-direction: column; gap: 0.4rem;
+  &__row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.7rem; min-width: 0; }
+  &__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &__opts { display: inline-flex; gap: 0.3rem; }
+  &__opt {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2rem; height: 2rem; border-radius: 6px; background: $qp-track; cursor: pointer;
+    input { position: absolute; opacity: 0; width: 0; height: 0; }
+    &:has(input:checked) { background: $qp-accent; color: #fff; }
+  }
+}
+
+// results
+.qp-results {
+  margin-top: $qp-gap; min-width: 0;
+  &__total, &__avg, &__based { margin: 0 0 0.6rem; }
+}
+.qp-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.qp-bar {
+  display: grid; grid-template-columns: minmax(5rem, 30%) 1fr auto; align-items: center; gap: 0.7rem; min-width: 0;
+  &__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &__track { background: $qp-track; border-radius: 999px; height: 0.65rem; overflow: hidden; &--seg { display: flex; } }
+  &__fill { display: block; height: 100%; width: 0; border-radius: 999px; background: $qp-accent; transition: width 0.5s cubic-bezier(.2,.7,.2,1); }
+  &__value { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  &--grid.is-best &__label { font-weight: 700; }
+}
+.qp-poll--js .qp-results:not(.is-shown) .qp-bar__fill { width: 0 !important; }
+.qp-seg { display: block; height: 100%; &--yes { background: $qp-accent; } &--maybe { background: mix($qp-accent, $qp-track, 45%); } &--no { background: $qp-track; } }
+
+// share
+.qp-share { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.9rem; cursor: pointer; &[hidden] { display: none; } }
+
+// re-vote
+.qp-revote {
+  display: inline-flex; align-items: center; margin-top: 0.6rem; padding: 0;
+  background: none; border: 0; color: inherit; font: inherit; cursor: pointer; opacity: 0.7;
+  &:hover { opacity: 1; }
+  &__label { text-decoration: underline; }
+  &[hidden] { display: none; }
+}
