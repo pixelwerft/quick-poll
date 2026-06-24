@@ -6,11 +6,13 @@ use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
 use craft\events\RegisterComponentTypesEvent;
+use craft\events\RegisterTemplateRootsEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\services\Elements;
 use craft\services\Fields;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
+use craft\web\View;
 use pixelwerft\quickpoll\elements\Poll;
 use pixelwerft\quickpoll\fields\PollField;
 use pixelwerft\quickpoll\models\Settings;
@@ -21,15 +23,10 @@ use yii\base\Event;
 /**
  * Quick Poll plugin — lightweight, reusable polls & votings.
  *
- * Domain boundary: this plugin owns only the *runtime* of voting (the votes
- * table, the vote/results endpoints, the dedup logic and the CP result view).
- * The content model (the `poll` section, its entry types and fields) lives in
- * the host site's project config — scaffold it once with:
- *
- *     php craft quick-poll/setup
- *
- * Nothing here is site-specific; the poll section is resolved via the
- * `pollSectionHandle` setting so the plugin travels between sites unchanged.
+ * Self-contained: polls are a plugin-managed, localizable element with their own
+ * CP section, the votes live in plugin-owned tables, and the front-end widget
+ * ships from the plugin's own templates/assets. Nothing is written to the host's
+ * project config and no scaffold step is required — installing is enough.
  *
  * @method static QuickPoll getInstance()
  * @method Settings getSettings()
@@ -69,10 +66,16 @@ class QuickPoll extends Plugin
     {
         parent::init();
 
-        // Console command lives under quick-poll/* (e.g. quick-poll/setup).
-        if (Craft::$app instanceof \craft\console\Application) {
-            $this->controllerNamespace = 'pixelwerft\quickpoll\console\controllers';
-        }
+        // Make the plugin's front-end templates resolvable as `quick-poll/*`
+        // (e.g. {% include 'quick-poll/widget' %}). CP templates already resolve
+        // under the same prefix via Craft's automatic CP template root.
+        Event::on(
+            View::class,
+            View::EVENT_REGISTER_SITE_TEMPLATE_ROOTS,
+            function (RegisterTemplateRootsEvent $event) {
+                $event->roots['quick-poll'] = __DIR__ . '/templates';
+            }
+        );
 
         // Register the plugin-managed Poll element type.
         Event::on(

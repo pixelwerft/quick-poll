@@ -9,7 +9,7 @@ use pixelwerft\quickpoll\elements\Poll;
 /**
  * "Quick Poll" field — relates one (or more) Poll elements. Drop it into any
  * field layout (entry, Matrix block, …) to let editors pick a poll, then render
- * it: {% include '_components/quickPollWidget.twig' with { poll: entry.myField.one() } %}
+ * it: {% include 'quick-poll/widget' with { poll: entry.myField.one() } %}
  */
 class PollField extends BaseRelationField
 {

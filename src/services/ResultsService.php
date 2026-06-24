@@ -19,7 +19,7 @@ class ResultsService extends Component
 {
     /**
      * Resolve a poll element by id, for attaching to a target entry:
-     *   {% include '_components/quickPollWidget.twig' with {
+     *   {% include 'quick-poll/widget' with {
      *        poll: craft.quickPoll.poll(123), target: entry } %}
      */
     public function poll(int $id): ?Poll
