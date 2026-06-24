@@ -1,0 +1,152 @@
+{# ============================================================================
+   Quick Poll — front-end widget (progressive enhancement).
+
+   Works without JavaScript (native POST → redirect back with a notice) and
+   enhances to inline voting + live results when poll.js is present.
+
+   Usage — embedded via the Quick Poll field:
+       {% set poll = entry.myPollField.one() %}
+       {% if poll %}{% include 'quick-poll/widget' with { poll: poll } %}{% endif %}
+
+   Usage — entity-attached (one poll reused across entries, votes per target):
+       {% include 'quick-poll/widget' with {
+           poll: craft.quickPoll.poll(123),
+           target: entry,
+       } %}
+
+   Override: copy this file into your own templates (e.g. _components/poll.twig)
+   and include that instead. The CSS classes, data-* hooks and endpoints stay
+   the same, so poll.js and poll.css keep working.
+   ========================================================================== #}
+{% if poll is defined and poll %}
+    {% do view.registerAssetBundle('pixelwerft\\quickpoll\\assets\\PollAsset') %}
+    {% if craft.app.plugins.getPlugin('quick-poll').settings.loadBaseCss %}
+        {% do view.registerAssetBundle('pixelwerft\\quickpoll\\assets\\PollCssAsset') %}
+    {% endif %}
+
+    {% set targetId = (target is defined and target) ? target.id : 0 %}
+    {% set qp        = craft.quickPoll %}
+    {% set isOpen    = qp.isOpen(poll) %}
+    {% set hasVoted  = qp.hasVoted(poll, targetId) %}
+    {% set canSee    = qp.canSee(poll, targetId) %}
+    {% set results   = qp.forPoll(poll, null, targetId) %}
+    {% set ballot    = qp.myBallot(poll, targetId) %}
+    {% set type      = poll.pollType %}
+    {% set display   = results.display ?? 'list' %}
+    {% set multi     = type == 'choice' and poll.multiSelect %}
+    {% set uid       = poll.id ~ '-' ~ targetId %}
+
+    {# hideAfterClose: drop the widget entirely once the poll has closed. #}
+    {% if not (poll.hideAfterClose and not isOpen) %}
+        {# Keep the form in the DOM when voted-but-revote-allowed, so the JS
+           "Change answer" button can reopen it. #}
+        {% set renderForm = isOpen and (not hasVoted or poll.allowRevote) %}
+
+        <div class="qp-poll"
+            data-qp-action="{{ actionUrl('quick-poll/vote/submit') }}"
+            data-qp-results="{{ actionUrl('quick-poll/results/show', { pollId: poll.id, targetId: targetId }) }}"
+            data-qp-display="{{ display }}"
+            data-qp-show-results="{{ canSee ? '1' : '0' }}"
+            data-qp-keep-form="{{ (renderForm and canSee and not hasVoted) ? '1' : '0' }}"
+            data-qp-voted="{{ hasVoted ? '1' : '0' }}"
+            data-qp-share-title="{{ poll.title }}"
+            data-qp-t-vote-one="{{ 'vote'|t('quick-poll') }}"
+            data-qp-t-vote-many="{{ 'votes'|t('quick-poll') }}"
+            data-qp-t-based-on="{{ 'Based on'|t('quick-poll') }}"
+            data-qp-t-copied="{{ 'Link copied'|t('quick-poll') }}"
+            data-qp-t-err-failed="{{ 'Voting failed.'|t('quick-poll') }}"
+            data-qp-t-err-network="{{ 'Network error. Please try again.'|t('quick-poll') }}"
+            data-qp-t-err-required="{{ 'Please choose an option.'|t('quick-poll') }}"
+        >
+            <p class="qp-poll__question">{{ poll.title }}</p>
+
+            {% if not isOpen %}
+                <p class="qp-poll__hint">{{ 'This poll is closed.'|t('quick-poll') }}</p>
+            {% endif %}
+
+            {% if poll.resultText %}
+                <div class="qp-poll__answer"{% if not canSee %} hidden{% endif %}>{{ poll.resultText|nl2br }}</div>
+            {% endif %}
+
+            {% if renderForm %}
+                <form class="qp-form" method="post" action=""{% if hasVoted %} hidden{% endif %}>
+                    {{ csrfInput() }}
+                    {{ actionInput('quick-poll/vote/submit') }}
+                    {{ redirectInput(craft.app.request.getUrl()) }}
+                    {{ hiddenInput('pollId', poll.id) }}
+                    {{ hiddenInput('targetId', targetId) }}
+
+                    {% if type == 'rating' %}
+                        <div class="qp-rating">
+                            {# row-reverse in CSS, so emit 5→1 for hover/checked styling #}
+                            {% for i in 5..1 %}
+                                {% set rid = 'qp-' ~ uid ~ '-r' ~ i %}
+                                <input type="radio" id="{{ rid }}" name="options[]" value="{{ i }}"{{ (i ~ '') in ballot.keys ? ' checked' }}>
+                                <label for="{{ rid }}" title="{{ i }}" aria-label="{{ i }}">&#9733;</label>
+                            {% endfor %}
+                        </div>
+
+                    {% elseif type == 'grid' %}
+                        {% set vlabels = { yes: 'Yes'|t('quick-poll'), maybe: 'Maybe'|t('quick-poll'), no: 'No'|t('quick-poll') } %}
+                        {% set glyphs  = { yes: '&#10003;', maybe: '~', no: '&#10007;' } %}
+                        <div class="qp-grid">
+                            {% for o in results.options %}
+                                <div class="qp-grid__row">
+                                    <span class="qp-grid__label">{{ o.label }}</span>
+                                    <span class="qp-grid__opts">
+                                        {% for v in ['yes', 'maybe', 'no'] %}
+                                            <label class="qp-grid__opt qp-grid__opt--{{ v }}" title="{{ vlabels[v] }}">
+                                                <input type="radio" name="values[{{ o.key }}]" value="{{ v }}"{{ (ballot.grid[o.key] ?? '') == v ? ' checked' }}>
+                                                <span aria-hidden="true">{{ glyphs[v]|raw }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                    {% elseif display == 'pill' %}
+                        <div class="qp-pill qp-pill--form">
+                            {% for o in results.options %}
+                                <label class="qp-pill__seg">
+                                    <input type="radio" name="options[]" value="{{ o.key }}"{{ o.key in ballot.keys ? ' checked' }}>
+                                    <span class="qp-pill__label">{{ o.label }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+
+                    {% else %}
+                        {# choice (single/multi) and mood, stacked #}
+                        {% for o in results.options %}
+                            <label class="qp-option">
+                                <input type="{{ multi ? 'checkbox' : 'radio' }}" name="options[]" value="{{ o.key }}"{{ o.key in ballot.keys ? ' checked' }}>
+                                {% if type == 'mood' %}<span class="qp-option__emoji" aria-hidden="true">{{ o.label }}</span>{% endif %}
+                                <span class="qp-option__label">{{ o.label }}</span>
+                            </label>
+                        {% endfor %}
+                    {% endif %}
+
+                    <button type="submit" class="qp-poll__submit btn">{{ 'Vote'|t('quick-poll') }}</button>
+                </form>
+            {% endif %}
+
+            <p class="qp-error" role="alert" hidden></p>
+
+            <div class="qp-results"{% if not canSee %} hidden{% endif %}>
+                {% if canSee %}{% include 'quick-poll/results' with { results: results } only %}{% endif %}
+            </div>
+
+            {% if poll.allowRevote and isOpen %}
+                <button type="button" class="qp-revote"{% if not hasVoted %} hidden{% endif %}>
+                    <span class="qp-revote__label">{{ 'Change answer'|t('quick-poll') }}</span>
+                </button>
+            {% endif %}
+
+            {% if poll.showShare %}
+                <button type="button" class="qp-share"{% if not canSee %} hidden{% endif %}>
+                    <span class="qp-share__label">{{ 'Share'|t('quick-poll') }}</span>
+                </button>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endif %}

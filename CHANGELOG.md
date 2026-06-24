@@ -1,8 +1,12 @@
 # Release Notes for Quick Poll
 
-## Unreleased
+## 1.1.0 - 2026-06-24
 
 ### Added
+- Front-end widget now ships with the plugin as the templates `quick-poll/widget`
+  and `quick-poll/results`. Embed with `{% include 'quick-poll/widget' with
+  { poll: poll } %}` — it registers its own JS/CSS, renders all four poll types,
+  works without JavaScript and is overridable by copying into your own templates.
 - Optional *Allow changing the answer* (`allowRevote`, off by default) — when a
   poll is open, voters can reopen the form via a **Change answer** button and
   update their vote (the existing replace-on-revote backend). The reopened form
@@ -10,6 +14,10 @@
   button stays hidden without JavaScript.
 - `craft.quickPoll.myBallot(poll, targetId)` — the current visitor's own ballot,
   shaped for pre-selecting the re-vote form.
+
+### Changed
+- Translations: added the front-end widget strings in all five languages and
+  removed leftover keys from the pre-1.0 scaffold workflow.
 
 ## 1.0.0 - 2026-06-03
 

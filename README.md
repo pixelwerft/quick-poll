@@ -90,12 +90,15 @@ result view shows a per-option breakdown and highlights the best-scoring option
 
 ## Embedding a poll
 
-Add a **Quick Poll** field to any field layout, pick a poll, then render it:
+The widget ships with the plugin as the template `quick-poll/widget` — it
+registers its own JS/CSS, renders all four poll types and works without
+JavaScript. Add a **Quick Poll** field to any field layout, pick a poll, then
+render it:
 
 ```twig
 {% set poll = entry.myPollField.one() %}
 {% if poll %}
-    {% include '_components/quickPollWidget.twig' with { poll: poll } %}
+    {% include 'quick-poll/widget' with { poll: poll } %}
 {% endif %}
 ```
 
@@ -104,7 +107,7 @@ Add a **Quick Poll** field to any field layout, pick a poll, then render it:
 Reuse one poll across many entries, with votes scoped per target:
 
 ```twig
-{% include '_components/quickPollWidget.twig' with {
+{% include 'quick-poll/widget' with {
     poll: craft.quickPoll.poll(123),   {# resolve by id #}
     target: entry                       {# the entry being rated #}
 } %}
@@ -180,12 +183,14 @@ GET  actions/quick-poll/results/show?pollId=123[&targetId=456]
 The `craft.quickPoll` variable exposes read-only helpers:
 
 ```twig
-{{ craft.quickPoll.poll(123) }}            {# resolve a Poll element by id #}
-{{ craft.quickPoll.forPoll(poll) }}        {# aggregated results array #}
-{{ craft.quickPoll.isOpen(poll) }}         {# voting still open? #}
-{{ craft.quickPoll.hasVoted(poll) }}       {# current visitor voted? #}
-{{ craft.quickPoll.canSee(poll) }}         {# may see results now? #}
-{{ craft.quickPoll.baseCssUrl }}           {# URL of the base stylesheet #}
+{{ craft.quickPoll.poll(123) }}              {# resolve a Poll element by id #}
+{{ craft.quickPoll.forPoll(poll) }}          {# aggregated results array #}
+{{ craft.quickPoll.isOpen(poll) }}           {# voting still open? #}
+{{ craft.quickPoll.hasVoted(poll) }}         {# current visitor voted? #}
+{{ craft.quickPoll.canSee(poll) }}           {# may see results now? #}
+{{ craft.quickPoll.myBallot(poll) }}         {# current visitor's own ballot #}
+{{ craft.quickPoll.byCategory('slug') }}     {# polls in a category, front-end #}
+{{ craft.quickPoll.baseCssUrl }}             {# URL of the base stylesheet #}
 ```
 
 ## Styling
@@ -200,9 +205,10 @@ flows inside your content area like any other block.
   with `$qp-*` variables — `@use` it in your build and extend.
 - **Ship your own CSS**: turn off `loadBaseCss`. The base file URL is still
   available: `<link rel="stylesheet" href="{{ craft.quickPoll.baseCssUrl }}">`.
-- **Override the template**: copy `_components/quickPollWidget.twig` (and
-  `quickPollResults.twig`) into your own templates and adapt freely; the
-  endpoints and CSS classes stay the same.
+- **Override the template**: copy the plugin's `templates/widget.twig` (and
+  `templates/results.twig`) into your own templates and include that copy
+  instead; the endpoints, `data-*` hooks and CSS classes stay the same, so
+  `poll.js`/`poll.css` keep working.
 
 ## Database
 
@@ -225,4 +231,5 @@ changelog from [`CHANGELOG.md`](CHANGELOG.md) via the raw URL declared in
 
 ## License
 
-Proprietary — © pixelwerft. See [LICENSE.md](LICENSE.md).
+Commercial — © pixelwerft. Licensed, not sold; see [LICENSE.md](LICENSE.md).
+Available through the [Craft Plugin Store](https://plugins.craftcms.com).
