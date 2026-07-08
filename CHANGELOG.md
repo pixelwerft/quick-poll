@@ -1,5 +1,11 @@
 # Release Notes for Quick Poll
 
+## 1.1.1 - 2026-07-08
+
+### Changed
+- `LICENSE.md` now contains the official Craft License text, as required for
+  commercial plugins in the Craft Plugin Store.
+
 ## 1.1.0 - 2026-06-24
 
 ### Added
