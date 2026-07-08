@@ -1,5 +1,11 @@
 # Release Notes for Quick Poll
 
+## 1.1.2 - 2026-07-09
+
+### Changed
+- Housekeeping release: republished so every available version ships the
+  official Craft License in `LICENSE.md`. No functional changes.
+
 ## 1.1.1 - 2026-07-08
 
 ### Changed
