@@ -1,0 +1,55 @@
+{# ============================================================================
+   Quick Poll — results partial.
+
+   Renders the tally for a poll. The markup mirrors what poll.js produces on the
+   client (same classes, same structure) so the no-JS server render and the JS
+   live render look identical and share the base stylesheet.
+
+   Expects a single variable:
+     results  the array from craft.quickPoll.forPoll(poll [, siteId, targetId])
+   ========================================================================== #}
+{% set total = results.total ?? 0 %}
+{% set unit = total == 1 ? 'vote'|t('quick-poll') : 'votes'|t('quick-poll') %}
+
+{% if results.display == 'pill' %}
+    <div class="qp-pill qp-pill--result" role="group">
+        {% for o in results.options %}
+            <div class="qp-pill__seg{{ (results.leader is defined and results.leader == o.key) ? ' is-leader' }}">
+                <span class="qp-pill__pct">{{ o.pct }}%</span>
+            </div>
+        {% endfor %}
+    </div>
+    <p class="qp-results__based">{{ 'Based on'|t('quick-poll') }} <strong>{{ total }}</strong> {{ unit }}</p>
+
+{% elseif results.type == 'grid' %}
+    <p class="qp-results__total">{{ total }} {{ unit }}</p>
+    <ul class="qp-bars qp-bars--grid">
+        {% for o in results.options %}
+            <li class="qp-bar qp-bar--grid{{ (results.best is defined and results.best == o.key) ? ' is-best' }}">
+                <span class="qp-bar__label">{{ o.label }}</span>
+                <span class="qp-bar__track qp-bar__track--seg">
+                    <span class="qp-seg qp-seg--yes" style="width:{{ o.yesPct }}%"></span>
+                    <span class="qp-seg qp-seg--maybe" style="width:{{ o.maybePct }}%"></span>
+                    <span class="qp-seg qp-seg--no" style="width:{{ o.noPct }}%"></span>
+                </span>
+                <span class="qp-bar__value">&#10003;{{ o.yes }} ~{{ o.maybe }} &#10007;{{ o.no }}</span>
+            </li>
+        {% endfor %}
+    </ul>
+
+{% else %}
+    {% if results.type == 'rating' and results.average is not null %}
+        <p class="qp-results__avg"><strong>{{ results.average }}</strong> / 5 &middot; {{ total }} {{ unit }}</p>
+    {% else %}
+        <p class="qp-results__total">{{ total }} {{ unit }}</p>
+    {% endif %}
+    <ul class="qp-bars">
+        {% for o in results.options %}
+            <li class="qp-bar{{ results.type == 'mood' ? ' qp-bar--mood' }}">
+                <span class="qp-bar__label">{{ o.label }}</span>
+                <span class="qp-bar__track"><span class="qp-bar__fill" style="width:{{ o.pct }}%"></span></span>
+                <span class="qp-bar__value">{{ o.pct }}% ({{ o.count }})</span>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}

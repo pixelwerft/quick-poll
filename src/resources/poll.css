@@ -1,0 +1,119 @@
+/* ============================================================================
+   Quick Poll — BASE stylesheet
+   ----------------------------------------------------------------------------
+   Structure only: layout, spacing, box-model, the bar/pill/grid skeleton and
+   minimal neutral defaults so a poll is usable out of the box. It deliberately
+   carries NO card/box decoration — the widget flows inside your content area
+   like any other block. Style the rest yourself, or override these rules.
+
+   Tune the few defaults via CSS custom properties on .qp-poll (or :root):
+     --qp-accent  highlight colour (selected option, leading result, fill)
+     --qp-track   empty bar/segment track colour
+     --qp-radius  corner radius
+     --qp-gap     vertical rhythm between rows
+     --qp-max     max width of the widget (default: none → fills content area)
+   ========================================================================== */
+
+.qp-poll {
+  --qp-accent: #2b6cb0;
+  --qp-track: #e7ecf1;
+  --qp-radius: 8px;
+  --qp-gap: 0.5rem;
+  --qp-max: none;
+
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--qp-max);
+  margin: 1.25rem 0;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+.qp-poll *,
+.qp-poll *::before,
+.qp-poll *::after { box-sizing: inherit; }
+
+.qp-poll__question { margin: 0 0 0.75rem; font-weight: 700; }
+.qp-poll__hint { margin: 0; color: inherit; opacity: 0.7; }
+.qp-poll__answer { margin: 0 0 0.75rem; }
+.qp-poll__answer[hidden] { display: none; }
+
+/* --- form --- */
+.qp-form { display: flex; flex-direction: column; gap: var(--qp-gap); border: 0; margin: 0; padding: 0; min-width: 0; }
+.qp-form[hidden] { display: none; } /* explicit display:flex above would otherwise beat the [hidden] attribute → form/submit would stay visible after voting */
+.qp-poll__submit { align-self: flex-start; margin-top: 0.4rem; cursor: pointer; }
+.qp-error { margin: 0.5rem 0 0; }
+
+/* --- choice / mood (stacked) --- */
+.qp-option { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; min-width: 0; }
+.qp-option input { accent-color: var(--qp-accent); flex: none; }
+.qp-option__emoji { line-height: 1; }
+.qp-option__label { min-width: 0; }
+
+/* --- rating (stars) --- */
+.qp-rating { display: inline-flex; flex-direction: row-reverse; gap: 0.15rem; }
+.qp-rating input { position: absolute; opacity: 0; width: 0; height: 0; }
+.qp-rating label { cursor: pointer; }
+
+/* --- segmented pill (choice/mood, ≤4 options) --- */
+.qp-pill { display: flex; width: 100%; min-width: 0; border-radius: 999px; overflow: hidden; background: var(--qp-track); }
+.qp-pill__seg {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.6rem 0.5rem;
+  line-height: 1.2;
+}
+.qp-pill__seg + .qp-pill__seg { border-left: 1px solid rgba(0, 0, 0, 0.08); }
+.qp-pill__label, .qp-pill__pct { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qp-pill--form .qp-pill__seg { cursor: pointer; }
+.qp-pill--form .qp-pill__seg input { position: absolute; opacity: 0; width: 0; height: 0; }
+.qp-pill--form .qp-pill__seg:has(input:checked) { background: var(--qp-accent); color: #fff; }
+.qp-pill--result .qp-pill__seg.is-leader { background: var(--qp-accent); color: #fff; }
+.qp-pill__pct { font-variant-numeric: tabular-nums; }
+
+/* --- grid voting (yes/maybe/no) --- */
+.qp-grid { display: flex; flex-direction: column; gap: 0.4rem; }
+.qp-grid__row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.7rem; min-width: 0; }
+.qp-grid__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qp-grid__opts { display: inline-flex; gap: 0.3rem; }
+.qp-grid__opt { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 6px; background: var(--qp-track); cursor: pointer; }
+.qp-grid__opt input { position: absolute; opacity: 0; width: 0; height: 0; }
+.qp-grid__opt--yes:has(input:checked) { background: var(--qp-accent); color: #fff; }
+.qp-grid__opt--maybe:has(input:checked) { background: var(--qp-accent); color: #fff; }
+.qp-grid__opt--no:has(input:checked) { background: var(--qp-accent); color: #fff; }
+
+/* --- results (bars) --- */
+.qp-results { margin-top: var(--qp-gap); min-width: 0; }
+.qp-results__total, .qp-results__avg, .qp-results__based { margin: 0 0 0.6rem; }
+.qp-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.qp-bar { display: grid; grid-template-columns: minmax(5rem, 30%) 1fr auto; align-items: center; gap: 0.7rem; min-width: 0; }
+.qp-bar__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qp-bar__track { background: var(--qp-track); border-radius: 999px; height: 0.65rem; overflow: hidden; }
+.qp-bar__fill { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--qp-accent); transition: width 0.5s cubic-bezier(.2,.7,.2,1); }
+.qp-poll--js .qp-results:not(.is-shown) .qp-bar__fill { width: 0 !important; }
+.qp-bar__value { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* grid result bars (segmented yes/maybe/no) */
+.qp-bar__track--seg { display: flex; }
+.qp-seg { display: block; height: 100%; }
+.qp-seg--yes { background: var(--qp-accent); }
+.qp-seg--maybe { background: color-mix(in srgb, var(--qp-accent) 45%, var(--qp-track)); }
+.qp-seg--no { background: var(--qp-track); }
+.qp-bar--grid.is-best .qp-bar__label { font-weight: 700; }
+
+/* --- share --- */
+.qp-share { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.9rem; cursor: pointer; }
+.qp-share[hidden] { display: none; }
+
+/* --- re-vote --- */
+.qp-revote { display: inline-flex; align-items: center; margin-top: 0.6rem; padding: 0; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; opacity: 0.7; }
+.qp-revote:hover { opacity: 1; }
+.qp-revote__label { text-decoration: underline; }
+.qp-revote[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .qp-bar__fill { transition: none; }
+}

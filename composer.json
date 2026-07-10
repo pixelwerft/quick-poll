@@ -1,0 +1,44 @@
+{
+  "name": "pixelwerft/quick-poll",
+  "description": "Lightweight, reusable polls & votings for Craft CMS 5 — ratings, choice, mood, grid (date/task/design voting). PollUnit-style, self-hosted, GDPR-friendly.",
+  "type": "craft-plugin",
+  "version": "1.1.2",
+  "license": "craft",
+  "support": {
+    "email": "manuel@pixelwerft.ch",
+    "issues": "https://github.com/pixelwerft/quick-poll/issues",
+    "source": "https://github.com/pixelwerft/quick-poll",
+    "docs": "https://github.com/pixelwerft/quick-poll"
+  },
+  "require": {
+    "php": ">=8.2",
+    "craftcms/cms": "^5.1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "pixelwerft\\quickpoll\\": "src/"
+    }
+  },
+  "extra": {
+    "handle": "quick-poll",
+    "name": "Quick Poll",
+    "developer": "pixelwerft",
+    "developerUrl": "https://pixelwerft.ch",
+    "documentationUrl": "https://github.com/pixelwerft/quick-poll",
+    "changelogUrl": "https://raw.githubusercontent.com/pixelwerft/quick-poll/main/CHANGELOG.md",
+    "class": "pixelwerft\\quickpoll\\QuickPoll",
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": {
+      "php": "8.2"
+    },
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true,
+      "craftcms/plugin-installer": true
+    }
+  }
+}
