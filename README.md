@@ -45,13 +45,6 @@ need the same poll to read and vote correctly in every language the site runs.
 - **i18n**: control panel and widget translated in German, French, Italian,
   English and Spanish.
 
-## Screenshots
-
-| | |
-| --- | --- |
-| ![Polls overview](src/resources/screenshots/quick-poll-overview.png) | ![Poll editor](src/resources/screenshots/quick-poll-edit.png) |
-| CP overview: type, status and voter count per poll, with CSV export. | Poll editor with the native per-language site switcher. |
-
 ## Installation
 
 Via Craft's plugin store:
